@@ -32,20 +32,20 @@ void ACPP_InteractItemEventTrigger::OnTraceEvent_Implementation(FHitResult& HitR
 bool ACPP_InteractItemEventTrigger::UsePlayerInventoryItem()
 {
 	constexpr int32 NOT_REQUIRED_ITEM = 0;
-	if (RequiredItemIDs.Num() <= NOT_REQUIRED_ITEM) { return false; }
+	if (RequiredItemNames.Num() <= NOT_REQUIRED_ITEM) { return false; }
 
 	TArray<FInteractItemData>* PlayerInteractItems = UCPP_O369GameInstance::GetInstance()->GetPlayerInventoryBase()->GetInteractItems();
 
 	TArray<FInteractItemData> UseTargetItemsData;
-	UseTargetItemsData.Reserve(RequiredItemIDs.Num());
+	UseTargetItemsData.Reserve(RequiredItemNames.Num());
 
 	int32 FoundCount = 0;
-	for (const FString& RequiredItemID : RequiredItemIDs)
+	for (const FString& RequiredItemName : RequiredItemNames)
 	{
 		for(int32 i = 0 ; i < PlayerInteractItems->Num(); i++)
 		{
 			FInteractItemData PlayerInteractItem = PlayerInteractItems->GetData()[i];
-			if (PlayerInteractItem.ID == RequiredItemID) 
+			if (PlayerInteractItem.Name == RequiredItemName)
 			{
 				UseTargetItemsData.Add(PlayerInteractItem);
 				FoundCount++;
@@ -55,7 +55,7 @@ bool ACPP_InteractItemEventTrigger::UsePlayerInventoryItem()
 	}
 
 	// 対象のアイテムを全て見つけられなかった
-	if (FoundCount < RequiredItemIDs.Num()) { return false; }
+	if (FoundCount < RequiredItemNames.Num()) { return false; }
 
 	for (const FInteractItemData& UseItemDataTarget : UseTargetItemsData)
 	{

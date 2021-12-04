@@ -5,10 +5,10 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "CPP_TraceInteractiveTriggerBase.h"
-#include "CPP_InteractItemBase.generated.h"
+#include "CPP_InteractDucumentItemBase.generated.h"
 
 USTRUCT(Blueprintable, BlueprintType)
-struct FInteractItemData : public FTableRowBase
+struct FInteractDocumentItemData : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -19,9 +19,9 @@ struct FInteractItemData : public FTableRowBase
 		FText Text;
 
 public:
-	bool operator==(const FInteractItemData InItemData) { return this->Name == InItemData.Name; }
+	bool operator==(const FInteractDocumentItemData InItemData) { return this->Name == InItemData.Name; }
 
-	void operator=(const FInteractItemData* InItemDataPtr)
+	void operator=(const FInteractDocumentItemData* InItemDataPtr)
 	{
 		if (InItemDataPtr == nullptr) { return; }
 		this->Name = InItemDataPtr->Name;
@@ -32,33 +32,34 @@ public:
 /**
  * 
  */
-UCLASS(Blueprintable, BlueprintType)
-class O369_HORROR01_API ACPP_InteractItemBase : public ACPP_TraceInteractiveTriggerBase
+UCLASS()
+class O369_HORROR01_API ACPP_InteractDucumentItemBase : public ACPP_TraceInteractiveTriggerBase
 {
 	GENERATED_BODY()
-	
+
 public:
-	ACPP_InteractItemBase();
+	ACPP_InteractDucumentItemBase();
 
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(EditAnywhere,BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class UStaticMeshComponent* ItemMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		class UStaticMeshComponent* ItemMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class USoundBase* AcquisitionSound;
+		class USoundBase* AcquisitionSound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		FName ItemName;
-
-	UPROPERTY(VisibleDefaultsOnly,BlueprintReadOnly , meta = (AllowPrivateAccess = "true"))
-	TSoftObjectPtr<UDataTable> InteractItemDataTable;
+		FName DocumentItem;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FInteractItemData ItemData;
+		TSoftObjectPtr<UDataTable> InteractDocumentItemDataTable;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		FInteractDocumentItemData DocumentItemData;
 
 public:
 	virtual void OnTraceEvent_Implementation(FHitResult& HitResult) override;
-
 };
+
+

@@ -41,15 +41,6 @@ struct FCharacterAnimationMontageData
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		float AnimPlayRate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		float StartAnimTime;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		float EndAnimTime;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		float EndAnimBlendTime;
-
 	const bool IsAnimMontageValid() { return AnimMontage != nullptr; }
 };
 
@@ -215,7 +206,7 @@ private:
 	void ChangePostureStand();
 	void UpdateMaxMoveSpeed();
 	void LimitHorizontalMove();
-	void PlayAnimationMontage(FCharacterAnimationMontageData InAnimMontageData, float& OutAnimEndTimeRate, float& OutAnimEndTime);
+	float PlayAnimationMontage(FCharacterAnimationMontageData InAnimMontageData);
 
 	UFUNCTION(BlueprintCallable)
 		void BeginPosture();
@@ -243,7 +234,7 @@ private:
 		void UpdateProgressTraceInteractive(class UCameraComponent* Camera);
 
 	UFUNCTION(BlueprintCallable)
-		void GetObstacleActionOverTime(FCharacterAnimationMontageData InAnimMontageData, float& OutEndTimeRate, float& OutAnimEndDelayTime);
+		float PlayObstacleActionAnimMontage(FCharacterAnimationMontageData InAnimMontageData);
 
 	UFUNCTION(BlueprintCallable)
 		bool CalculateObstacleAction(ECharacterObstacleAction& OutObstacleAction, FVector& OutActioningLocation);

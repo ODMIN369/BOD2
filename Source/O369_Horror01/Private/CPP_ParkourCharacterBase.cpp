@@ -158,45 +158,17 @@ void ACPP_ParkourCharacterBase::EndWallRun(ECharacterWallRunRelaseType InWallRun
 	//カメラ傾き終了
 }
 
-void ACPP_ParkourCharacterBase::GetObstacleActionOverTime(FCharacterAnimationMontageData InAnimMontageData, float& OutEndTimeRate, float& OutAnimEndDelayTime)
-{
-	constexpr float NON_ANIMTIME = 0.f;
-	constexpr float NON_ANIMDELAY = 0.f;
-	constexpr float VAULT_ANIM_RATE = 0.5f;
-
-
-	// 各アクションでアニメーション終了待機時間やMoveToComponentでの移動時間が変わる
-	switch (ParkourCharacterMovement->CurrentObstacleAction)
-	{
-
-	case ECharacterObstacleAction::Clamb:
-		PlayAnimationMontage(InAnimMontageData, OutEndTimeRate, OutAnimEndDelayTime);
-		break;
-
-	case ECharacterObstacleAction::Vault:
-		OutEndTimeRate = VAULT_ANIM_RATE;
-		OutAnimEndDelayTime = NON_ANIMDELAY;
-		break;
-
-	default:
-		PlayAnimationMontage(InAnimMontageData, OutEndTimeRate, OutAnimEndDelayTime);
-		break;
-	}
+float ACPP_ParkourCharacterBase::PlayObstacleActionAnimMontage(FCharacterAnimationMontageData InAnimMontageData)
+{	
+	return PlayAnimationMontage(InAnimMontageData) / InAnimMontageData.AnimPlayRate;
 }
 
-void ACPP_ParkourCharacterBase::PlayAnimationMontage(FCharacterAnimationMontageData InAnimMontageData, float& OutAnimEndTimeRate, float& OutAnimEndTime)
+float ACPP_ParkourCharacterBase::PlayAnimationMontage(FCharacterAnimationMontageData InAnimMontageData)
 {
-	if (!InAnimMontageData.IsAnimMontageValid()) { return; }
+	constexpr float PLAY_FAILED = 0.f;
+	if (!InAnimMontageData.IsAnimMontageValid()) { return PLAY_FAILED; }
 
-	PlayAnimMontage(InAnimMontageData.AnimMontage, InAnimMontageData.AnimPlayRate);
-
-	constexpr float CALC_RATE = 100.f;
-	const float LengthRate = (InAnimMontageData.EndAnimTime - InAnimMontageData.StartAnimTime) / CALC_RATE;
-	OutAnimEndTimeRate = LengthRate * InAnimMontageData.AnimMontage->GetPlayLength();
-
-	const float PlayLengthRate = InAnimMontageData.AnimMontage->GetPlayLength() * InAnimMontageData.AnimPlayRate;
-	const float PlayLengthResult = PlayLengthRate - InAnimMontageData.AnimMontage->GetPlayLength() - InAnimMontageData.EndAnimBlendTime;
-	OutAnimEndTime = PlayLengthResult;
+	return PlayAnimMontage(InAnimMontageData.AnimMontage, InAnimMontageData.AnimPlayRate);
 }
 
 float ACPP_ParkourCharacterBase::PlayLandedRigidityAnimMontage(float InPlayRate)

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "CPP_InteractItemBase.h"
+#include "CPP_InteractDucumentItemBase.h"
 #include "CPP_PlayerInventoryBase.generated.h"
 
 /**
@@ -22,6 +23,11 @@ protected:
 	UPROPERTY()
 	TArray<FInteractItemData> InteractItems;
 
+	UPROPERTY()
+		TArray<FInteractDocumentItemData> InteractDocumentItems;
+
 public:
 	TArray<FInteractItemData>* GetInteractItems() { return &InteractItems; }
+	TArray<FInteractDocumentItemData>* GetInteractDocumentItems() { return &InteractDocumentItems; }
+
 };
