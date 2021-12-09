@@ -210,6 +210,9 @@ bool ACPP_ParkourCharacterBase::MovementForwardInput(float InInputScale, bool In
 
 		// 綱渡りアクション中は入力を無効
 		if (ParkourCharacterMovement->IsObstacleBalanceBeam()) { return false; }
+
+		// 隙間移動アクション中は入力を無効
+		if (ParkourCharacterMovement->IsObstacleCrevice()) { return false; }
 	}
 
 	ParkourAnimInstance->SetVerticalInputAxis_Implementation(InInputScale);

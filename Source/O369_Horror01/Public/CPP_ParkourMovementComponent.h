@@ -108,6 +108,9 @@ public:
 		float CliffMoveSpeed = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ObstacleMove)
+		float CreviceMoveSpeed = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ObstacleMove)
 		float BalanceBeamMoveSpeed = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ObstacleAction)
@@ -311,6 +314,9 @@ public:
 		void ObstacleCliffMovementInput(float InInputScale);
 
 	UFUNCTION(BlueprintCallable)
+		void ObstacleCreviceMovementInput(float InInputScale);
+
+	UFUNCTION(BlueprintCallable)
 		void ObstacleBalanceBeamMovementInput(float InInputScale);
 
 public:
@@ -346,6 +352,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 		bool IsObstacleBalanceBeam() { return CurrentObstacleAction == ECharacterObstacleAction::BalanceBeam; }
+
+	UFUNCTION(BlueprintPure)
+		bool IsObstacleCrevice() { return CurrentObstacleAction == ECharacterObstacleAction::Crevice; }
 
 #pragma endregion
 

@@ -20,11 +20,6 @@ void UCPP_ParkourCharacterAnimBase::NativeUpdateAnimation(float DeltaSeconds)
 {
 	UpdateObstacleAction();
 
-	if (ParkourAnimCharacter != nullptr)
-	{
-		Speed = 0.f;
-		if (ParkourAnimCharacter.Get()->GetParkourMovementComponent()->IsObstacleActioning()) { return; }
-	}
 	Super::NativeUpdateAnimation(DeltaSeconds);
 }
 
@@ -41,6 +36,7 @@ void UCPP_ParkourCharacterAnimBase::UpdateObstacleAction()
 	bIsWallRun = ObstacleAction == ECharacterObstacleAction::WallRun;
 	bIsCliff = ObstacleAction == ECharacterObstacleAction::Cliff;
 	bIsHanging = ObstacleAction == ECharacterObstacleAction::Hanging;
+	bIsCrevice = ObstacleAction == ECharacterObstacleAction::Crevice;
 }
 
 void UCPP_ParkourCharacterAnimBase::ChangePosture_Implementation(ECharacterPosture InCharacterPosture)
@@ -71,6 +67,11 @@ void UCPP_ParkourCharacterAnimBase::SetCurrentJump_Implementation(int32 InJumpLi
 void UCPP_ParkourCharacterAnimBase::SetCliffMoveDirection_Implementation(float InCliffMoveDir)
 {
 	CliffMoveDir = CliffMoveDir;
+}
+
+void UCPP_ParkourCharacterAnimBase::SetCreviceMoveDirection_Implementation(float InCreviceMoveDir)
+{
+	CreviceMoveVelocity = Speed * InCreviceMoveDir;
 }
 
 #pragma optimize ("",on)

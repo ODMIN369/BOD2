@@ -40,6 +40,7 @@ UCPP_ParkourMovementComponent::UCPP_ParkourMovementComponent()
 	SlidingThreshold = 100.f;
 	LadderClimbSpeed = 50.f;
 	CliffMoveSpeed = 50.f;
+	CreviceMoveSpeed = 50.f;
 
 	bIsSprintForwardOnly = true;
 	bIsCanWallRun = false;
@@ -122,6 +123,14 @@ void UCPP_ParkourMovementComponent::ObstacleCliffMovementInput(float InInputScal
 	FVector ForwardVector = ParkourCharacter->GetMesh()->GetForwardVector();
 	ParkourCharacter->AddMovementInput(-ForwardVector * MaxFlySpeed, InInputScale);
 	ParkourCharacter->GetParkourCharacterAnimInstance()->SetCliffMoveDirection_Implementation(InInputScale);
+}
+
+void UCPP_ParkourMovementComponent::ObstacleCreviceMovementInput(float InInputScale)
+{
+	MaxFlySpeed = CreviceMoveSpeed;
+	FVector ForwardVector = ParkourCharacter->GetMesh()->GetForwardVector();
+	ParkourCharacter->AddMovementInput(-ForwardVector * MaxFlySpeed, InInputScale);
+	ParkourCharacter->GetParkourCharacterAnimInstance()->SetCreviceMoveDirection_Implementation(InInputScale);
 }
 
 void UCPP_ParkourMovementComponent::ObstacleBalanceBeamMovementInput(float InInputScale)

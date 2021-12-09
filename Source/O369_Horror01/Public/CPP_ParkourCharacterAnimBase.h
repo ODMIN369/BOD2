@@ -40,10 +40,16 @@ protected:
 	bool bIsCliff;
 
 	UPROPERTY(BlueprintReadOnly)
+	bool bIsCrevice;
+
+	UPROPERTY(BlueprintReadOnly)
 	bool bIsHanging;
 
 	UPROPERTY(BlueprintReadOnly)
 	float CliffMoveDir;
+
+	UPROPERTY(BlueprintReadOnly)
+	float CreviceMoveVelocity;
 
 	UPROPERTY(BlueprintReadOnly)
 	float WallRunDirection;
@@ -73,9 +79,11 @@ public:
 	void SetWallRunDirection_Implementation(float InDirectionMagnitude) override;
 
 	void SetCliffMoveDirection(float CriffMoveDir);
-	void SetCliffMoveDirection_Implementation(float InCriffMoveDir);
+	void SetCliffMoveDirection_Implementation(float InCriffMoveDir) override;
 
 	void SetCurrentJump(int32 InJumpLife);
 	void SetCurrentJump_Implementation(int32 InJumpLife) override;
 	
+	void SetCreviceMoveDirection(float CreviceMoveDir);
+	void SetCreviceMoveDirection_Implementation(float InCreviceMoveDir) override;
 };

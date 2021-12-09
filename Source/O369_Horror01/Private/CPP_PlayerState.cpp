@@ -29,11 +29,11 @@ void ACPP_PlayerState::SetHealthApplyDamage(float InDamageValue)
 	const float AfterHealth = Health - InDamageValue;
 	Health = FMath::Clamp(AfterHealth, 0.f, Health);
 
-	UE_LOG(ParkourMovementCompLog, Log, TEXT("Health:%f->%f"), BeforeHealth, Health);
+	UE_LOG(PlayerStateLog, Log, TEXT("Health:%f->%f"), BeforeHealth, Health);
 
 	if (GetIsDead())
 	{
-		UE_LOG(ParkourMovementCompLog, Log, TEXT("OnPlayerIsDead"));
+		UE_LOG(PlayerStateLog, Log, TEXT("OnPlayerIsDead"));
 		OnPlayerDeadDelegateEvent.Broadcast();
 	}
 }

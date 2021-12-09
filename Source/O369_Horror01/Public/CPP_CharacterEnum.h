@@ -22,7 +22,8 @@ enum class ECharacterObstacleAction : uint8
 	Hanging,
 	Creeping,
 	StandHiding,
-	BalanceBeam
+	BalanceBeam,
+	Crevice
 };
 
 UENUM(Blueprintable,BlueprintType)

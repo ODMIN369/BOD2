@@ -39,4 +39,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "ParkourCharaInterface")
 	void SetCliffMoveDirection(float InCriffMoveDir);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "ParkourCharaInterface")
+	void SetCreviceMoveDirection(float InCreviceMoveVelocity);
 };
