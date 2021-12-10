@@ -27,7 +27,10 @@ void ACPP_InteractItemBase::BeginPlay()
 	{
 		FString ContextString;
 		const FInteractItemData* InteractItemDataRow = InteractItemDataTable.Get()->FindRow<FInteractItemData>(ItemName, ContextString);
+		if (InteractItemDataRow == nullptr) { return; }
+
 		ItemData = InteractItemDataRow;
+		ItemData.Id = ItemName;
 	}
 }
 

@@ -32,21 +32,26 @@ void ACPP_InteractItemEventTrigger::OnTraceEvent_Implementation(FHitResult& HitR
 bool ACPP_InteractItemEventTrigger::UsePlayerInventoryItem()
 {
 	constexpr int32 NOT_REQUIRED_ITEM = 0;
-	if (RequiredItemNames.Num() <= NOT_REQUIRED_ITEM) { return false; }
+	//使用するアイテムがない場合は強制的に失敗
+	if (RequiredItemIds.Num() <= NOT_REQUIRED_ITEM) { return false; }
 
+	// インベントリにあるアイテム
 	TArray<FInteractItemData>* PlayerInteractItems = UCPP_O369GameInstance::GetInstance()->GetPlayerInventoryBase()->GetInteractItems();
 
+	// これから使用されるアイテムのキャッシュ
 	TArray<FInteractItemData> UseTargetItemsData;
-	UseTargetItemsData.Reserve(RequiredItemNames.Num());
+	UseTargetItemsData.Reserve(RequiredItemIds.Num());
 
 	int32 FoundCount = 0;
-	for (const FString& RequiredItemName : RequiredItemNames)
+	// 必要なアイテム分インベントリから探す
+	for (const FName& RequiredItemId : RequiredItemIds)
 	{
 		for(int32 i = 0 ; i < PlayerInteractItems->Num(); i++)
 		{
 			FInteractItemData PlayerInteractItem = PlayerInteractItems->GetData()[i];
-			if (PlayerInteractItem.Name == RequiredItemName)
+			if (PlayerInteractItem.Id == RequiredItemId)
 			{
+				// 使用するアイテムを確定させる
 				UseTargetItemsData.Add(PlayerInteractItem);
 				FoundCount++;
 				break; 
@@ -54,11 +59,12 @@ bool ACPP_InteractItemEventTrigger::UsePlayerInventoryItem()
 		}
 	}
 
-	// 対象のアイテムを全て見つけられなかった
-	if (FoundCount < RequiredItemNames.Num()) { return false; }
+	// 使用対象のアイテムを全て見つけられなかった
+	if (FoundCount < RequiredItemIds.Num()) { return false; }
 
 	for (const FInteractItemData& UseItemDataTarget : UseTargetItemsData)
 	{
+		// 使用したアイテムをインベントリから削除する
 		PlayerInteractItems->RemoveSwap(UseItemDataTarget);
 	}
 

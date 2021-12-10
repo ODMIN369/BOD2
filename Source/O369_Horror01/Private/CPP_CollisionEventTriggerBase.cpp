@@ -10,9 +10,9 @@
 // Sets default values
 ACPP_CollisionEventTriggerBase::ACPP_CollisionEventTriggerBase()
 {
+	TriggerCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	TriggerCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
 	TriggerCollision->SetGenerateOverlapEvents(true);
-
 }
 
 void ACPP_CollisionEventTriggerBase::BeginPlay()
@@ -22,6 +22,26 @@ void ACPP_CollisionEventTriggerBase::BeginPlay()
 	TriggerCollision->OnComponentBeginOverlap.AddDynamic(this, &ACPP_CollisionEventTriggerBase::OnOverlapBegin);
 	TriggerCollision->OnComponentEndOverlap.AddDynamic(this, &ACPP_CollisionEventTriggerBase::OnOverlapEnd);
 	TriggerCollision->OnComponentHit.AddDynamic(this, &ACPP_CollisionEventTriggerBase::OnHit);
+
+	SetIsHitEventMode(IsHitEventMode);
+}
+
+void ACPP_CollisionEventTriggerBase::SetIsHitEventMode(bool InIsHitEventMode)
+{
+	TriggerCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	TriggerCollision->SetGenerateOverlapEvents(true);
+
+	if (!InIsHitEventMode)
+	{
+		TriggerCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	}
+	else
+	{
+		TriggerCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+	}
+
+	TriggerCollision->SetNotifyRigidBodyCollision(InIsHitEventMode);
+	IsHitEventMode = InIsHitEventMode;
 }
 
 void ACPP_CollisionEventTriggerBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

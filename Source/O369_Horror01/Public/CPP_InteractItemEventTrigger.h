@@ -27,7 +27,7 @@ protected:
 		class USoundBase* FailedSound;
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
-	TArray<FString> RequiredItemNames;
+	TArray<FName> RequiredItemIds;
 
 protected:
 	UFUNCTION(BlueprintCallable)

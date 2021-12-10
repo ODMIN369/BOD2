@@ -11,6 +11,7 @@ USTRUCT(Blueprintable, BlueprintType)
 struct FInteractItemData : public FTableRowBase
 {
 	GENERATED_BODY()
+		FName Id;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		FString Name;
@@ -19,7 +20,7 @@ struct FInteractItemData : public FTableRowBase
 		FText Text;
 
 public:
-	bool operator==(const FInteractItemData InItemData) { return this->Name == InItemData.Name; }
+	bool operator==(const FInteractItemData InItemData) { return this->Id == InItemData.Id; }
 
 	void operator=(const FInteractItemData* InItemDataPtr)
 	{

@@ -29,6 +29,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		bool bIsOneShotEvent = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		bool IsHitEventMode = true;
+
 private:
 	bool bIsHit = false;
 
@@ -62,6 +65,10 @@ public:
 	// BP用
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnHitEvent(AActor* OtherActor);
+
+public:
+	UFUNCTION(BlueprintCallable)
+		void SetIsHitEventMode(bool InIsHitEventMode);
 
 public:
 	// 外部からバインドする用
