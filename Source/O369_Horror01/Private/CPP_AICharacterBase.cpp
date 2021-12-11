@@ -12,12 +12,14 @@ ACPP_AICharacterBase::ACPP_AICharacterBase(const FObjectInitializer& ObjectIniti
 	:Super(ObjectInitializer.SetDefaultSubobjectClass<UCPP_CharacterMovementComponent>(ACPP_CharacterBase::CharacterMovementComponentName))
 {
 	AITouchTraceUpdateTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("AITouchTraceUpdateTimeline"));
-	AITouchTraceUpdateTimeline->SetLooping(true);
 }
 
 void ACPP_AICharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AITouchTraceUpdateTimeline->SetLooping(true);
+
 	FOnTimelineEvent UpdateEvent;
 	UpdateEvent.BindUFunction(this,FName("AITouchTraceTimelineUpdateEvent"));
 	AITouchTraceUpdateTimeline->SetTimelinePostUpdateFunc(UpdateEvent);

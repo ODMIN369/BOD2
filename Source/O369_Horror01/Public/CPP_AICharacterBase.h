@@ -50,6 +50,7 @@ private:
 	UFUNCTION()
 	void AITouchTraceTimelineUpdateEvent();
 
+	UFUNCTION()
 	bool UpdateAITouchTrace(AActor*& HitResultActor);
 
 public:
