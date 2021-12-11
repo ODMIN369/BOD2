@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "Components/TimelineComponent.h"
 #include "CPP_PlayerState.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerDeadDelegateEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAutoRecoveryHealthFinishedDelegateEvent);
+
 
 /**
  * 
@@ -26,20 +29,56 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
-private:
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UTimelineComponent* AutoHealthRecoveryTimeline;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool CanIsAutoHealthRecovery = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float DefaultHealth = 100.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float AutoRecoveryHealth = 1.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float StartDelayTimeAutoRecoveryHealth = 1.f;
+
+	UPROPERTY()
 	float Health;
+
+private:
+	struct FTimerHandle TimerHandleAutoRecoveryHealth;
+
+private:
+	UFUNCTION()
+	void UpdateAutoHealthRecovery();
 
 public:
 	UFUNCTION(BlueprintCallable)
+	void SetHealth(float InNewHealth);
+
+	UFUNCTION(BlueprintCallable)
 	void SetHealthApplyDamage(float InDamageValue);
 
+public:
 	UFUNCTION(BlueprintPure)
-	float GetHealth() { return Health; }
+	float GetDefaultHealth() const { return DefaultHealth; }
 
 	UFUNCTION(BlueprintPure)
-		bool GetIsDead() { return Health == 0; }
+	float GetHealth() const { return Health; }
+
+	UFUNCTION(BlueprintPure)
+	bool GetIsHealthMax() const { return Health >= DefaultHealth; }
+
+	UFUNCTION(BlueprintPure)
+	bool GetIsDead() const { return Health == 0; }
 
 public:
 	UPROPERTY(BlueprintAssignable)
 		FPlayerDeadDelegateEvent OnPlayerDeadDelegateEvent;
+
+	UPROPERTY(BlueprintAssignable)
+		FAutoRecoveryHealthFinishedDelegateEvent AutoRecoveryHealthFinishedDelegateEvent;
 };
