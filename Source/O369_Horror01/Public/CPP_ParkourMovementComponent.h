@@ -81,16 +81,31 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_GroundMove)
 		float CreepingMoveSpeed = 0.f;
 
-	// 着地硬直とみなす閾値
+	// 軽い着地硬直とみなす閾値
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_Land)
-		float LandedRigidityThreshold = 0.f;
+		float SoftLandedRigidityThreshold = 0.f;
+
+	// 軽い着地硬直時間
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_Land)
+		float SoftLandedRigidityTime = 0.f;
+
+	// 重めの着地硬直とみなす閾値
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_Land)
+		float HeavyLandedRigidityThreshold = 0.f;
 	
-	// 着地硬直時間
+	// 重めの着地硬直時間
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_Land)
-		float LandedRigidityTime = 0.f;
+		float HeavyLandedRigidityTime = 0.f;
+
+	// ジャンプ後の着地硬直時間
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_Land)
+		float JumpLandedRigidityTime = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_Land)
-		TSubclassOf<class UCameraShakeBase> LandedRigidityCameraShake;
+		TSubclassOf<class UCameraShakeBase> SoftLandedRigidityCameraShake;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_Land)
+		TSubclassOf<class UCameraShakeBase> HeavyLandedRigidityCameraShake;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_GroundMove)
 		float WaterMoveSpeedRate = 1.f;
@@ -177,9 +192,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ObstacleAction)
 		float WallRunThreshold = 0.f;
 
-	// ボルトアクション時に追加で前進する距離のレート(0 = 追加移動なし)
+	// ボルトアクション時に追加で前進する距離(0 = 追加移動なし)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ObstacleAction)
-		float VaultMoveAmountRate = 0.f;
+		float VaultMoveAddDistance = 0.f;
 
 	// ボルトアクション時に最大距離前進するために必要なVelocityの閾値
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ObstacleAction)
@@ -192,6 +207,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_Jump)
 		float MinimalJumpPower = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_Jump)
+		float JumpingAddForwardPower = 0.f;
 
 	// 連続ジャンプ時のジャンプ力減少値
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_Jump)
@@ -218,22 +236,36 @@ public:
 
 #pragma region ParkourMovementFlags
 	public:
+		//一定の高さの障害物を乗り越えたり、登ったりすることができるようになるフラグ
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ParkourMoveFlags)
+		bool bIsCanFreeParkour = true;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ParkourMoveFlags)
 		bool bIsCanSliding = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ParkourMoveFlags)
 		bool bIsCanWallRun = false;
 
-	// 着地硬直を有効化するか
+	// 軽めの着地硬直を有効化するか
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ParkourMoveFlags)
-		bool bIsLandedRigidityEnabled = false;
+		bool bIsSoftLandedRigidityEnabled = false;
+
+	// 重めの着地硬直を有効化するか
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ParkourMoveFlags)
+		bool bIsHeavyLandedRigidityEnabled = false;
+
+	// ジャンプ着地後の硬直を有効化するか
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ParkourMoveFlags)
+		bool bIsJumpLandedRigidityEnabled = false;
 #pragma endregion
 
 #pragma region Timer
 private:
 	FTimerHandle SlidingDecelerateCoolTimeHandle;
 	FTimerHandle JumpDecelerateCoolTimeHandle;
-	FTimerHandle LandedRigidityTimeHandle;
+	FTimerHandle SoftLandedRigidityTimeHandle;
+	FTimerHandle HeavyLandedRigidityTimeHandle;
+	FTimerHandle JumpLandedRigidityTimeHandle;
 #pragma endregion
 
 #pragma region Posture
@@ -295,14 +327,23 @@ public:
 			FLandedDelegateEvent OnNormalLandedDelegateEvent;
 
 		UPROPERTY(BlueprintAssignable)
-			FLandedDelegateEvent OnRigidityLandedDelegateEvent;
+			FLandedDelegateEvent OnSoftRigidityLandedDelegateEvent;
+
+		UPROPERTY(BlueprintAssignable)
+			FLandedDelegateEvent OnHeavyRigidityLandedDelegateEvent;
 
 protected:
 	UFUNCTION()
 	void Landed(const FHitResult& Hit);
 
 	UFUNCTION()
-	void LandedRigidity();
+	void SoftLandedRigidity();
+
+	UFUNCTION()
+	void HeavyLandedRigidity();
+
+	UFUNCTION()
+	void JumpLandedRigidity();
 
 #pragma region ObstascleAction
 
@@ -498,7 +539,9 @@ public:
 
 #pragma region Utility
 private:
-	bool IsLandedRigidity() { return FMath::Abs(Velocity.Z) > LandedRigidityThreshold; }
+	bool IsSoftLandedRigidity() { return FMath::Abs(Velocity.Z) > SoftLandedRigidityThreshold; }
+	bool IsHeavyLandedRigidity() { return FMath::Abs(Velocity.Z) > HeavyLandedRigidityThreshold; }
+	bool IsJumpLandedRigidity() { return CurrentJumpLife < MaxJumpLife; }
 public:
 	bool IsWaterSurface() { return CurrentGroundSurfaceType == EPhysicalSurface::SurfaceType6; }
 	bool IsPubbleSurface() { return CurrentGroundSurfaceType == EPhysicalSurface::SurfaceType10; }

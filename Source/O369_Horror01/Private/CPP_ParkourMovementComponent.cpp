@@ -56,7 +56,7 @@ UCPP_ParkourMovementComponent::UCPP_ParkourMovementComponent()
 
 	SprintThreshold = 500.f;
 	WallRunThreshold = 800.f;;
-	VaultMoveAmountRate = 0.3f;
+	VaultMoveAddDistance = 0.f;
 
 	HorizontalLimitVelocity = 10000.f;
 
@@ -150,11 +150,10 @@ void UCPP_ParkourMovementComponent::VelocityJump()
 	CurrentJumpLife--;
 	JumpContinuousUseCount++;
 
-	const FVector BeforeVelocity = Velocity.GetSafeNormal() * GetOriginVelocityLength();
 	const float JumpPower = ParkourCharacter->GetActorForwardVector().Z + (JumpZVelocity - (JumpPowerDecelerateValue * JumpContinuousUseCount));
 	const float ClampJumpPower = FMath::Clamp(JumpPower, MinimalJumpPower,JumpZVelocity);
-	const FVector JumpVelocity = FVector(BeforeVelocity.X, BeforeVelocity.Y, ClampJumpPower);
-
+	const FVector AfterVelocity = Velocity.GetSafeNormal() * (GetOriginVelocityLength() + JumpingAddForwardPower);
+	const FVector JumpVelocity = FVector(AfterVelocity.X ,AfterVelocity.Y, ClampJumpPower);
 	ParkourCharacter->LaunchCharacter(JumpVelocity, true, true);
 
 	ChangePostureStand();
@@ -184,6 +183,7 @@ void UCPP_ParkourMovementComponent::UpdateMaxMoveSpeed()
 		MaxWalkSpeedCrouched = CrouchMoveSpeed;
 		return;
 	}
+
 
 	// ÉçÅ[ÉJÉãä÷êî==========================================================================================================================
 	// ínå`Ç…ÇÊÇÈëñÇËë¨ìxÇÃçXêV
@@ -277,49 +277,123 @@ void UCPP_ParkourMovementComponent::Landed(const FHitResult& Hit)
 
 	UE_LOG(ParkourMovementCompLog, Log, TEXT("Process Landed()"));
 
-	if (bIsLandedRigidityEnabled)
+	// íÖínçdíºÇÃóDêÊèáà ÅFçÇ
+	if (bIsHeavyLandedRigidityEnabled)
 	{
-		if (IsLandedRigidity())
+		if (IsHeavyLandedRigidity())
 		{
-			LandedRigidity();
-			OnRigidityLandedDelegateEvent.Broadcast();
+			HeavyLandedRigidity();
+			OnHeavyRigidityLandedDelegateEvent.Broadcast();
 			return;
 		}
 	}
+
+	// íÖínçdíºÇÃóDêÊèáà ÅFíÜ
+	if (bIsSoftLandedRigidityEnabled)
+	{
+		if (IsSoftLandedRigidity())
+		{
+			SoftLandedRigidity();
+			OnSoftRigidityLandedDelegateEvent.Broadcast();
+			return;
+		}
+	}
+
+	// íÖínçdíºÇÃóDêÊèáà ÅFí·
+	if (bIsJumpLandedRigidityEnabled)
+	{
+		if (IsJumpLandedRigidity())
+		{
+			JumpLandedRigidity();
+			OnNormalLandedDelegateEvent.Broadcast();
+			return;
+		}
+	}
+
 	LandedSliding();
 
 	OnNormalLandedDelegateEvent.Broadcast();
 }
 
-void UCPP_ParkourMovementComponent::LandedRigidity()
+void UCPP_ParkourMovementComponent::HeavyLandedRigidity()
 {
-	UE_LOG(ParkourMovementCompLog, Log, TEXT("ZVelocity: %f,LandedRigidityThreshold: %f"), FMath::Abs(Velocity.Z), LandedRigidityThreshold);
+	UE_LOG(ParkourMovementCompLog, Log, TEXT("ZVelocity: %f,HeavyLandedRigidityThreshold: %f"), FMath::Abs(Velocity.Z), HeavyLandedRigidityThreshold);
 
 	Velocity = FVector::ZeroVector;
 
 	UCPP_O369GameInstance::GetInstance()->SetPlayerInputControl(this, false);
-	UE_LOG(ParkourMovementCompLog, Log, TEXT("LandedRigidityTime : Complete PlayerInputControl Disable!"));
+	//UE_LOG(ParkourMovementCompLog, Log, TEXT("HeavyLandedRigidityTime : Complete PlayerInputControl Disable!"));
 
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
-	if (TimerManager.IsTimerActive(LandedRigidityTimeHandle))
+	if (TimerManager.IsTimerActive(HeavyLandedRigidityTimeHandle))
 	{
-		TimerManager.ClearTimer(LandedRigidityTimeHandle);
+		TimerManager.ClearTimer(HeavyLandedRigidityTimeHandle);
 	}
-	GetWorld()->GetTimerManager().SetTimer(LandedRigidityTimeHandle,
+	GetWorld()->GetTimerManager().SetTimer(HeavyLandedRigidityTimeHandle,
 		[this]()
 		{
 			UCPP_O369GameInstance::GetInstance()->SetPlayerInputControl(this, true);
-			UE_LOG(ParkourMovementCompLog, Log, TEXT("LandedRigidityTime : Complete PlayerInputControl Enabled!"));
+			UE_LOG(ParkourMovementCompLog, Log, TEXT("HeavyLandedRigidityTime : Complete PlayerInputControl Enabled!"));
 		},
-		LandedRigidityTime, false
+		HeavyLandedRigidityTime, false
 		);
 
 	ParkourCharacter->PlayLandedRigidityAnimMontage();
 
-	if (LandedRigidityCameraShake == nullptr) { return; }
-	GetPlayerController()->ClientStartCameraShake(LandedRigidityCameraShake);
+	if (HeavyLandedRigidityCameraShake == nullptr) { return; }
+	GetPlayerController()->ClientStartCameraShake(HeavyLandedRigidityCameraShake);
 
+}
+
+void UCPP_ParkourMovementComponent::SoftLandedRigidity()
+{
+	UE_LOG(ParkourMovementCompLog, Log, TEXT("ZVelocity: %f,SoftLandedRigidityThreshold: %f"), FMath::Abs(Velocity.Z), HeavyLandedRigidityThreshold);
+
+	Velocity = FVector::ZeroVector;
+
+	UCPP_O369GameInstance::GetInstance()->SetPlayerInputControl(this, false);
+	//UE_LOG(ParkourMovementCompLog, Log, TEXT("SoftLandedRigidityTime : Complete PlayerInputControl Disable!"));
+
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	if (TimerManager.IsTimerActive(SoftLandedRigidityTimeHandle))
+	{
+		TimerManager.ClearTimer(SoftLandedRigidityTimeHandle);
+	}
+	GetWorld()->GetTimerManager().SetTimer(SoftLandedRigidityTimeHandle,
+		[this]()
+		{
+			UCPP_O369GameInstance::GetInstance()->SetPlayerInputControl(this, true);
+			UE_LOG(ParkourMovementCompLog, Log, TEXT("SoftLandedRigidityTime : Complete PlayerInputControl Enabled!"));
+		},
+		SoftLandedRigidityTime, false
+			);
+
+	if (SoftLandedRigidityCameraShake == nullptr) { return; }
+	GetPlayerController()->ClientStartCameraShake(SoftLandedRigidityCameraShake);
+}
+
+void UCPP_ParkourMovementComponent::JumpLandedRigidity()
+{
+	Velocity = FVector::ZeroVector;
+
+	UCPP_O369GameInstance::GetInstance()->SetPlayerInputControl(this, false);
+
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	if (TimerManager.IsTimerActive(JumpLandedRigidityTimeHandle))
+	{
+		TimerManager.ClearTimer(JumpLandedRigidityTimeHandle);
+	}
+	GetWorld()->GetTimerManager().SetTimer(JumpLandedRigidityTimeHandle,
+		[this]()
+		{
+			UCPP_O369GameInstance::GetInstance()->SetPlayerInputControl(this, true);
+			UE_LOG(ParkourMovementCompLog, Log, TEXT("JumpLandedRigidityTime : Complete PlayerInputControl Enabled!"));
+		},
+		JumpLandedRigidityTime, false
+			);
 }
 
 void UCPP_ParkourMovementComponent::BeginSlidingEvent()
@@ -753,6 +827,8 @@ bool UCPP_ParkourMovementComponent::CalculateObstacleAction(ECharacterObstacleAc
 		return false;
 	}
 
+	if (!bIsCanFreeParkour) { return false; }
+
 	// è·äQï®ÇÃçÇÇ≥ÇéÊìæÇ∑ÇÈ
 	const FVector WallLocation = ObstacleTraceHit.Location;
 	const FVector WallNormal = ObstacleTraceHit.Normal;
@@ -838,9 +914,10 @@ bool UCPP_ParkourMovementComponent::CalculateObstacleAction(ECharacterObstacleAc
 			constexpr float VAULT_ADD_HEIGHT = 60.f;
 
 			constexpr float MIN_VAULT_MOVE_VELOCITY_RATE = 0.f;
-			const float velocityRate = GetOriginVelocityLength() / VaultMoveMaxAmountVelocityThreshold;
-			const float currentVelocityRate = FMath::Clamp(velocityRate, MIN_VAULT_MOVE_VELOCITY_RATE, VaultMoveAmountRate);
-			OutActioningLocation = (BackWallTraceEndLocation + (WallForward * VAULTABLE_DISTANCE) * currentVelocityRate) + FVector(0.f, 0.f, VAULT_ADD_HEIGHT);
+			constexpr float MAX_VAULT_MOVE_VELOCITY_RATE = 1.f;
+			float velocityRate = VaultMoveMaxAmountVelocityThreshold <= 0.f ? MAX_VAULT_MOVE_VELOCITY_RATE : GetOriginVelocityLength() / VaultMoveMaxAmountVelocityThreshold;
+			const float currentVelocityRate = FMath::Clamp(velocityRate, MIN_VAULT_MOVE_VELOCITY_RATE, MAX_VAULT_MOVE_VELOCITY_RATE);
+			OutActioningLocation = ((BackWallTraceEndLocation + (WallForward * VaultMoveAddDistance)) * currentVelocityRate) + FVector(0.f, 0.f, VAULT_ADD_HEIGHT);
 			SetObstacleAction(OutObstacleAction);
 			ResetContinuousUseSlidingCount();
 			return true;
