@@ -200,7 +200,7 @@ bool ACPP_ParkourCharacterBase::MovementForwardInput(float InInputScale, bool In
 	if (ParkourCharacterMovement->IsObstacleActioning())
 	{
 		// ‚æ‚¶“o‚èƒAƒNƒVƒ‡ƒ“’†‚Í“ü—Í‚ð–³Œø
-		if (ParkourCharacterMovement->IsObstacleClimb()) { return false; }
+		//if (ParkourCharacterMovement->IsObstacleClimb()) { return false; }
 
 		// ŠRÛˆÚ“®’†‚Í“ü—Í‚ð–³Œø‰»
 		if (ParkourCharacterMovement->IsObstacleCliff()) { return false; }
