@@ -32,8 +32,22 @@ private:
 	bool IsSprintInput = false;
 	bool IsWalkingInput = false;
 
-public:
+protected:
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float DefaultMaxVerticalControlRotation = 65.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float DefaultMinVerticalControlRotation = -75.f;
+
+public:
+	UFUNCTION(BlueprintPure)
+		float GetDefaultMaxVerticalControlRotation() { return DefaultMaxVerticalControlRotation; }
+
+	UFUNCTION(BlueprintPure)
+		float GetDefaultMinVerticalControlRotation() { return DefaultMinVerticalControlRotation; }
+
+public:
 	// ÉJÉÅÉâÇÃècé≤âÒì]ÇÃêßå¿ÇïœçXÇ∑ÇÈ
 	UFUNCTION(BlueprintCallable)
 	void SetCameraVerticalView(float InPitchMax, float InPitchMin);

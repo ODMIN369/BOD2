@@ -15,10 +15,7 @@ void ACPP_PlayerController::BeginPlay()
 
 void ACPP_PlayerController::ResetCameraVerticalView()
 {
-	// これはオリジナルのデフォルトの数値
-	constexpr float DEFAULT_CAM_VIEW_PITCH_MAX = 65.f;
-	constexpr float DEFAULT_CAM_VIEW_PITCH_MIN = -75.f;
-	SetCameraVerticalView(DEFAULT_CAM_VIEW_PITCH_MAX, DEFAULT_CAM_VIEW_PITCH_MIN);
+	SetCameraVerticalView(DefaultMaxVerticalControlRotation, DefaultMinVerticalControlRotation);
 }
 
 void ACPP_PlayerController::SetCameraVerticalView(float InPitchMax, float InPitchMin)
