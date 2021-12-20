@@ -143,19 +143,25 @@ void UCPP_ParkourMovementComponent::ObstacleBalanceBeamMovementInput(float InInp
 
 void UCPP_ParkourMovementComponent::VelocityJump()
 {
-	if (!IsCanJump()) { return; }
+ 	if (!IsCanJump()) { return; }
 	if (IsObstacleActioning()) { return; }
 	if (IsHighWaterSurface() || IsMidWaterSurface()) { return; }
 
 	CurrentJumpLife--;
 	JumpContinuousUseCount++;
 
-	const float JumpPower = ParkourCharacter->GetActorForwardVector().Z + (JumpZVelocity - (JumpPowerDecelerateValue * JumpContinuousUseCount));
-	const float ClampJumpPower = FMath::Clamp(JumpPower, MinimalJumpPower,JumpZVelocity);
-	const FVector AfterVelocity = Velocity.GetSafeNormal() * (GetOriginVelocityLength() + JumpingAddForwardPower);
-	const FVector JumpVelocity = FVector(AfterVelocity.X ,AfterVelocity.Y, ClampJumpPower);
-	ParkourCharacter->LaunchCharacter(JumpVelocity, true, true);
+	const float VelocityLength = GetOriginVelocityLength();
+	// 歩き速度の閾値
+	constexpr float WALK_VELOCITY_LENGTH_THRESHOLD = 20.f;
+	// 障害物に対してジャンプした際に横移動してしまうバグの対応
+	const float VelocityRate = FMath::Clamp(VelocityLength / WALK_VELOCITY_LENGTH_THRESHOLD, 0.f, 1.f);
 
+	const float JumpPower = JumpZVelocity - (JumpPowerDecelerateValue * JumpContinuousUseCount);
+	const float ClampJumpPower = FMath::Clamp(JumpPower, MinimalJumpPower, JumpZVelocity);
+	const FVector AfterVelocity = Velocity.GetSafeNormal() * (VelocityLength + (JumpingAddForwardPower * VelocityRate));
+	const FVector JumpVelocity = FVector(AfterVelocity.X ,AfterVelocity.Y, ClampJumpPower);
+
+	Launch(JumpVelocity);
 	ChangePostureStand();
 
 	ParkourCharacter->SetCurrentJump_Implementation(GetCurrentJumpLife());
@@ -848,12 +854,6 @@ bool UCPP_ParkourMovementComponent::CalculateObstacleAction(ECharacterObstacleAc
 		return false;
 	}
 
-	// 登れる高さかどうか
-	const FVector WallHeightLocation = WallTraceHit.Location;
-	const bool bIsHigherVaultPoint = WallHeightLocation.Z > ParkourCharacter->GetVaultableLocation()->GetComponentLocation().Z;
-	const bool bIsHigherClimbablePoint = WallHeightLocation.Z > ParkourCharacter->GetClimbableLocation()->GetComponentLocation().Z;
-	const bool bIsShouldCliming = bIsHigherVaultPoint & !bIsHigherClimbablePoint;
-
 	// 障害物の分厚さを取得
 	constexpr float VAULTABLE_DISTANCE = -150.f;
 	// 飛び越えアクション分の厚さを基準
@@ -867,45 +867,36 @@ bool UCPP_ParkourMovementComponent::CalculateObstacleAction(ECharacterObstacleAc
 	// 移動ルートに障害物があるか確認
 	// 障害物として認識するための高さ
 	constexpr float ADD_HEIGHT = 50.f;
-	// 移動先の幅に余裕があるかどうかの長さ
-	constexpr float ADD_FORWARD = 60.f;
+	const FVector WallHeightLocation = WallTraceHit.Location;
 	const FVector DestinationRootTraceStartLocation = WallHeightLocation + FVector(0.f, 0.f, ADD_HEIGHT);
 	const FVector DestinationRootTraceForwardLocation = WallLocation + BackWallTraceForward;
 	const FVector DestinationRootTraceEndLocation = FVector(DestinationRootTraceForwardLocation.X, DestinationRootTraceForwardLocation.Y, WallHeightLocation.Z + ADD_HEIGHT);
 	FHitResult DestinationRootHit;
+	// 飛び越え分の移動中に障害物があるかどうか確認する
 	const bool bIsDestinationHit = SingleLineTraceForObstacleAction(DestinationRootTraceStartLocation, DestinationRootTraceEndLocation, DestinationRootHit);
-
-	bool bIsClimbNearFloorHit = false;
-	//if (!bIsDestinationHit && !bIsBackWallHit)
-	//{
-	//	constexpr float CLIMB_RADIUS = -50.f;
-	//	// 障害物の上かつ手前で登れる位置を取得
-	//	const FVector ClimbTraceForward = WallForward * CLIMB_RADIUS;
-	//	const FVector ClimbTraceStartLocation = (WallLocation + ClimbTraceForward) + FVector(0.f, 0.f, WALL_HEIGHT_DISTANCE);
-	//	const FVector ClimbTraceEndLocation = WallLocation + ClimbTraceForward;
-	//	FHitResult ClimbFloorHit;
-	//	// 障害物の上にトレースを発射
-	//	bIsClimbNearFloorHit = SingleLineTraceForObstacleAction(ClimbTraceStartLocation, ClimbTraceEndLocation, ClimbFloorHit);
-	//}
-
-	bool bIsVaultable = false;
-	bool bIsWallThick = false;
-	bool bIsClimingWithinRange = false;
 
 	// 目的地まで障害物検知なし、移動先は障害物の上ではない
 	if (!bIsDestinationHit && !bIsBackWallHit)
 	{
-		// 障害物が飛び越え可能な高さ
-		bIsVaultable = WallHeightLocation.Z <= ParkourCharacter->GetVaultableLocation()->GetComponentLocation().Z;
-		if (bIsVaultable && !bIsWallThick)
+		bool bIsCanVaultable = WallHeightLocation.Z <= ParkourCharacter->GetVaultableLocation()->GetComponentLocation().Z;
+		// 障害物が飛び越え可能な高さ		
+		if (bIsCanVaultable)
 		{
+			constexpr float MIN_VAULT_MOVE_VELOCITY_RATE = 0.f;
+			constexpr float MAX_VAULT_MOVE_VELOCITY_RATE = 1.f;
+			float velocityRate = VaultMoveMaxAmountVelocityThreshold <= 0.f ? MAX_VAULT_MOVE_VELOCITY_RATE : GetOriginVelocityLength() / VaultMoveMaxAmountVelocityThreshold;
+			const float currentVelocityRate = FMath::Clamp(velocityRate, MIN_VAULT_MOVE_VELOCITY_RATE, MAX_VAULT_MOVE_VELOCITY_RATE);
+
 			// 細い隙間といったスタックしてしまう箇所に入れなくする対策トレース
 			UCapsuleComponent* MyCharacterCollision = ParkourCharacter->GetCapsuleComponent();
 			FHitResult VaultTraceHitResult;
-			constexpr float VaultedRadiusCheckLocationZUp = 50.f;
+			constexpr float VaultedSafeStuckAreaLocationAddZ = 50.f;
+
+			// スタックチェックの座標を各種補正パラメーター込みの座標で計算する
+			FVector VaultedSafeStuckAreaLocation = BackWallTraceEndLocation + ((WallForward * VaultMoveAddDistance) * currentVelocityRate);
 			// Z軸をそのままにすると床に埋まってしまい、接触判定になるので少し浮かせる
-			const FVector VaultedRadiusCheckLocation = FVector(BackWallTraceEndLocation.X, BackWallTraceEndLocation.Y, BackWallTraceEndLocation.Z + VaultedRadiusCheckLocationZUp);
-			if (CapsuleTraceForObstacleAction(VaultedRadiusCheckLocation, VaultedRadiusCheckLocation, MyCharacterCollision->GetScaledCapsuleRadius(), MyCharacterCollision->GetScaledCapsuleHalfHeight(), VaultTraceHitResult))
+			VaultedSafeStuckAreaLocation.Z += VaultedSafeStuckAreaLocationAddZ;
+			if (CapsuleTraceForObstacleAction(VaultedSafeStuckAreaLocation, VaultedSafeStuckAreaLocation, MyCharacterCollision->GetScaledCapsuleRadius(), MyCharacterCollision->GetScaledCapsuleHalfHeight(), VaultTraceHitResult))
 			{
 				return false;
 			}
@@ -913,26 +904,16 @@ bool UCPP_ParkourMovementComponent::CalculateObstacleAction(ECharacterObstacleAc
 			OutObstacleAction = ECharacterObstacleAction::Vault;
 			constexpr float VAULT_ADD_HEIGHT = 60.f;
 
-			constexpr float MIN_VAULT_MOVE_VELOCITY_RATE = 0.f;
-			constexpr float MAX_VAULT_MOVE_VELOCITY_RATE = 1.f;
-			float velocityRate = VaultMoveMaxAmountVelocityThreshold <= 0.f ? MAX_VAULT_MOVE_VELOCITY_RATE : GetOriginVelocityLength() / VaultMoveMaxAmountVelocityThreshold;
-			const float currentVelocityRate = FMath::Clamp(velocityRate, MIN_VAULT_MOVE_VELOCITY_RATE, MAX_VAULT_MOVE_VELOCITY_RATE);
-			OutActioningLocation = ((BackWallTraceEndLocation + (WallForward * VaultMoveAddDistance)) * currentVelocityRate) + FVector(0.f, 0.f, VAULT_ADD_HEIGHT);
+			OutActioningLocation = VaultedSafeStuckAreaLocation;
 			SetObstacleAction(OutObstacleAction);
 			ResetContinuousUseSlidingCount();
 			return true;
 		}
 	}
-	// 目的地まで障害物検知なし、移動先が障害物の上
-	else if (!bIsDestinationHit && bIsBackWallHit)
-	{
-		// 登る先の高さを計算
-		const FVector WallThickVector = BackWallHit.Location - WallHeightLocation;
-		constexpr float WALLTHICK_VALUE = 30.f;
-		bIsWallThick = WallThickVector.Z > WALLTHICK_VALUE;
-	}
-	//障害物検知もしくは障害物検知はないけど移動先が障害物の上
-	if (bIsDestinationHit || !bIsDestinationHit && bIsBackWallHit)
+
+	bool bIsClimingWithinRange = false;
+	//障害物検知もしくは移動先が障害物の上
+	if (bIsDestinationHit || bIsBackWallHit)
 	{
 		const FVector DestinationRootHitLocation = DestinationRootHit.Location;
 		const float ClimingRadius = FVector(WallHeightLocation.X, WallHeightLocation.Y, 0.f).Size();
@@ -947,25 +928,16 @@ bool UCPP_ParkourMovementComponent::CalculateObstacleAction(ECharacterObstacleAc
 		bIsClimingWithinRange = true;
 	}
 
-	bool bIsLowCliming = false;
+	bool bIsNormalCliming = false;
 	// 登れる分の足場がある
 	if (bIsClimingWithinRange)
 	{
-		if (!bIsWallThick)
-		{
-			// ある程度低い場合は低地登りとする
-			constexpr float HALF_HEIGHT = 2.f;
-			bIsLowCliming = WallHeightLocation.Z > ParkourCharacter->GetVaultableLocation()->GetComponentLocation().Z / HALF_HEIGHT &&
-				WallHeightLocation.Z < ParkourCharacter->GetClimbableLocation()->GetComponentLocation().Z;
-		}
+		// 登れる高さの場合は通常登り
+		bIsNormalCliming = ParkourCharacter->GetClimbableLocation()->GetComponentLocation().Z > WallHeightLocation.Z;
 	}
 
-	//bIsShouldCliming：通常登り
-	//bIsLowCliming   ：低地登り
-	//bIsVaultable    ：飛び越え
-
 	// 登りアクションとして計算結果を返す
-	if (bIsShouldCliming || bIsLowCliming || bIsClimbNearFloorHit)
+	if (bIsNormalCliming)
 	{
 		OutObstacleAction = ECharacterObstacleAction::Clamb;
 		constexpr float CLIMB_ADD_HEIGHT = 100.f;
@@ -973,12 +945,6 @@ bool UCPP_ParkourMovementComponent::CalculateObstacleAction(ECharacterObstacleAc
 		SetObstacleAction(OutObstacleAction);
 		ResetContinuousUseSlidingCount();
 		return true;
-	}
-
-	// 登りアクションでない場合
-	if (bIsWallThick || !bIsVaultable)
-	{
-		return false;
 	}
 
 	OutObstacleAction = ECharacterObstacleAction::None;
