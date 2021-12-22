@@ -246,16 +246,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ParkourMoveFlags)
 		bool bIsCanWallRun = false;
 
-	// 軽めの着地硬直を有効化するか
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ParkourMoveFlags)
-		bool bIsSoftLandedRigidityEnabled = false;
-
-	// 重めの着地硬直を有効化するか
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ParkourMoveFlags)
-		bool bIsHeavyLandedRigidityEnabled = false;
-
 	// ジャンプ着地後の硬直を有効化するか
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_ParkourMoveFlags)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Category_Land)
 		bool bIsJumpLandedRigidityEnabled = false;
 #pragma endregion
 

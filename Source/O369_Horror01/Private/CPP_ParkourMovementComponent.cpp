@@ -283,8 +283,9 @@ void UCPP_ParkourMovementComponent::Landed(const FHitResult& Hit)
 
 	UE_LOG(ParkourMovementCompLog, Log, TEXT("Process Landed()"));
 
+	constexpr float RIGIDITY_LANDED_ENABLE_THRESHOLD = 0.f;
 	// ’…’nd’¼‚Ì—Dæ‡ˆÊF‚
-	if (bIsHeavyLandedRigidityEnabled)
+	if (HeavyLandedRigidityThreshold > RIGIDITY_LANDED_ENABLE_THRESHOLD)
 	{
 		if (IsHeavyLandedRigidity())
 		{
@@ -295,7 +296,7 @@ void UCPP_ParkourMovementComponent::Landed(const FHitResult& Hit)
 	}
 
 	// ’…’nd’¼‚Ì—Dæ‡ˆÊF’†
-	if (bIsSoftLandedRigidityEnabled)
+	if (SoftLandedRigidityThreshold > RIGIDITY_LANDED_ENABLE_THRESHOLD)
 	{
 		if (IsSoftLandedRigidity())
 		{
