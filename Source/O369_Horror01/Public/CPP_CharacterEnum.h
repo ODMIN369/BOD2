@@ -14,6 +14,7 @@ enum class ECharacterObstacleAction : uint8
 	None,
 	Vault,
 	Clamb,
+	LowClamb,
 	Ladder,
 	WallRun,
 	Cliff,

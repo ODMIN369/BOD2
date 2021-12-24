@@ -804,6 +804,7 @@ bool UCPP_ParkourMovementComponent::CalculateObstacleAction(ECharacterObstacleAc
 {
 	OutObstacleAction = ECharacterObstacleAction::None;
 	OutActioningLocation = GetActorLocation();
+	SetObstacleAction(OutObstacleAction);
 
 	// 前方方向に入力していない、姿勢が立ち状態以外、ジャンプキーを入力していない、なにかしらのアクション中の場合は抜ける
 	if (!ParkourCharacter->IsMovingForward() || !IsCurrentPostureStand() || !GetPlayerController()->GetIsJumpingInput() || IsObstacleActioning() || !IsMovingOnGround())
@@ -891,7 +892,7 @@ bool UCPP_ParkourMovementComponent::CalculateObstacleAction(ECharacterObstacleAc
 			// 細い隙間といったスタックしてしまう箇所に入れなくする対策トレース
 			UCapsuleComponent* MyCharacterCollision = ParkourCharacter->GetCapsuleComponent();
 			FHitResult VaultTraceHitResult;
-			constexpr float VaultedSafeStuckAreaLocationAddZ = 50.f;
+			constexpr float VaultedSafeStuckAreaLocationAddZ = 80.f;
 
 			// スタックチェックの座標を各種補正パラメーター込みの座標で計算する
 			FVector VaultedSafeStuckAreaLocation = BackWallTraceEndLocation + ((WallForward * VaultMoveAddDistance) * currentVelocityRate);
@@ -929,30 +930,30 @@ bool UCPP_ParkourMovementComponent::CalculateObstacleAction(ECharacterObstacleAc
 		bIsClimingWithinRange = true;
 	}
 
-	bool bIsNormalCliming = false;
 	// 登れる分の足場がある
 	if (bIsClimingWithinRange)
 	{
-		// 登れる高さの場合は通常登り
-		bIsNormalCliming = ParkourCharacter->GetClimbableLocation()->GetComponentLocation().Z > WallHeightLocation.Z;
-	}
+		const float CharacterClimbHeight = ParkourCharacter->GetClimbableLocation()->GetComponentLocation().Z;
+		constexpr float CharacterLowClimbHeight = 125.f;
 
-	// 登りアクションとして計算結果を返す
-	if (bIsNormalCliming)
-	{
-		OutObstacleAction = ECharacterObstacleAction::Clamb;
+		// 検知した高さが通常登りの半分の場合は低地登り
+		if (CharacterLowClimbHeight > WallHeightLocation.Z)
+		{
+			OutObstacleAction = ECharacterObstacleAction::LowClamb;
+		}
+		// 検知した高さが通常登りの場合は通常登り
+		else if (CharacterClimbHeight > WallHeightLocation.Z)
+		{
+			OutObstacleAction = ECharacterObstacleAction::Clamb;
+		}
+		
 		constexpr float CLIMB_ADD_HEIGHT = 100.f;
 		OutActioningLocation = WallHeightLocation + FVector(0.f, 0.f, CLIMB_ADD_HEIGHT);
 		SetObstacleAction(OutObstacleAction);
 		ResetContinuousUseSlidingCount();
 		return true;
+
 	}
-
-	OutObstacleAction = ECharacterObstacleAction::None;
-	SetObstacleAction(OutObstacleAction);
-
-	OutActioningLocation = GetActorLocation();
-
 	return false;
 }
 
